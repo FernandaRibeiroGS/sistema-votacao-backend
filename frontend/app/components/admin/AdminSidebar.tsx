@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Trophy, Users, Tag, LogOut, ChevronRight, BarChart2 } from 'lucide-react';
+import { LayoutDashboard, Trophy, Users, Tag, LogOut, ChevronRight, BarChart2, FileText } from 'lucide-react';
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/results', label: 'Apuração Ao Vivo', icon: BarChart2 },
+  { href: '/admin/reports', label: 'Relatório Geral de Votos', icon: FileText },
   { href: '/admin/contests', label: 'Concursos', icon: Trophy },
   { href: '/admin/categories', label: 'Categorias', icon: Tag },
   { href: '/admin/candidates', label: 'Candidatas', icon: Users },

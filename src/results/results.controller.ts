@@ -31,4 +31,12 @@ export class ResultsController {
   async getDashboard() {
     return this.resultsService.getDashboard();
   }
+
+  // Administrativo — gerar relatório detalhado dos votos
+  @Get('admin/reports/votes/:contestId')
+  @UseGuards(JwtAdminGuard, RolesGuard)
+  @Roles(AdminRole.ADMIN, AdminRole.OPERATOR)
+  async getVoteReport(@Param('contestId', ParseIntPipe) contestId: number) {
+    return this.resultsService.getVoteReport(contestId);
+  }
 }

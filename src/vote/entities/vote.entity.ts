@@ -42,6 +42,15 @@ export class Vote {
   @JoinColumn({ name: 'candidate_child_id' })
   candidate_child: Candidate;
 
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  voter_name: string;
+
+  @Column({ type: 'varchar', length: 14, nullable: true })
+  voter_cpf: string;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  voter_birth_date: string;
+
   @Column({ length: 45, nullable: true })
   ip: string;
 

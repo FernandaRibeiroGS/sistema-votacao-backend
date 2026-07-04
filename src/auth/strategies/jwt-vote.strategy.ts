@@ -13,7 +13,20 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt-vote') {
     });
   }
 
-  async validate(payload: { sub: string; cpf: string; contestId: number }) {
-    return { cpfHash: payload.cpf, contestId: payload.contestId };
+  async validate(payload: {
+    sub: string;
+    cpf: string;
+    contestId: number;
+    voterName?: string;
+    voterCpf?: string;
+    voterBirthDate?: string;
+  }) {
+    return {
+      cpfHash: payload.cpf,
+      contestId: payload.contestId,
+      voterName: payload.voterName,
+      voterCpf: payload.voterCpf,
+      voterBirthDate: payload.voterBirthDate,
+    };
   }
 }

@@ -6,7 +6,13 @@ import { SubmitVoteDto } from './dto/submit-vote.dto';
 import { JwtVoteGuard } from '../auth/guards/jwt-vote.guard';
 
 interface AuthenticatedRequest extends Request {
-  user: { cpfHash: string; contestId: number };
+  user: {
+    cpfHash: string;
+    contestId: number;
+    voterName?: string;
+    voterCpf?: string;
+    voterBirthDate?: string;
+  };
 }
 
 @Controller('votes')
@@ -28,6 +34,7 @@ export class VoteController {
     return this.voteService.startVoteSession(
       dto.cpf,
       dto.nomeCompleto,
+      dto.dataNascimento,
       dto.captchaAnswer,
       dto.captchaKey,
     );
@@ -49,6 +56,9 @@ export class VoteController {
       dto.candidateAdultId,
       ip,
       userAgent,
+      req.user.voterName,
+      req.user.voterCpf,
+      req.user.voterBirthDate,
     );
   }
 }

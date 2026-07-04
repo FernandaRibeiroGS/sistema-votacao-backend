@@ -19,7 +19,11 @@ import { AuditLog } from './audit/entities/audit-log.entity';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+      ignoreEnvFile: process.env.NODE_ENV === 'production',
+    }),
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

@@ -17,4 +17,8 @@ export class StartVoteDto {
   @IsString()
   @IsNotEmpty({ message: 'Chave do captcha é obrigatória.' })
   captchaKey: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Data de nascimento é obrigatória.' })
+  dataNascimento: string;
 }

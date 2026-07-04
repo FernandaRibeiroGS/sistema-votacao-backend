@@ -20,7 +20,7 @@ export class VoteProcessor extends WorkerHost {
   async process(job: Job<any>): Promise<void> {
     if (job.name !== 'new-vote') return;
 
-    const { cpfHash, contestId, candidateChildId, candidateAdultId, ip, userAgent, votedAt } = job.data;
+    const { cpfHash, contestId, candidateChildId, candidateAdultId, ip, userAgent, votedAt, voterName, voterCpf, voterBirthDate } = job.data;
     this.logger.log(`Processando job ${job.id} — CPF hash: ${cpfHash.substring(0, 8)}...`);
 
     try {
@@ -34,6 +34,9 @@ export class VoteProcessor extends WorkerHost {
             contest_id: contestId,
             candidate_adult_id: candidateAdultId,
             candidate_child_id: candidateChildId,
+            voter_name: voterName ?? null,
+            voter_cpf: voterCpf ?? null,
+            voter_birth_date: voterBirthDate ?? null,
             ip: ip ?? null,
             user_agent: userAgent ?? null,
             voted_at: new Date(votedAt),

@@ -120,4 +120,23 @@ export class ResultsService {
       order: { inicio: 'DESC' },
     });
   }
+
+  async getVoteReport(contestId: number) {
+    const votes = await this.voteRepository.find({
+      where: { contest_id: contestId },
+      relations: ['candidate_adult', 'candidate_child'],
+      order: { voted_at: 'ASC' },
+    });
+
+    return votes.map((v) => ({
+      id: v.id,
+      eleitorNome: v.voter_name || 'Anônimo',
+      eleitorCpf: v.voter_cpf || 'Não informado',
+      eleitorDataNascimento: v.voter_birth_date || 'Não informada',
+      candidataAdulta: v.candidate_adult ? `${v.candidate_adult.nome} (Nº ${v.candidate_adult.numero})` : 'Nenhuma',
+      candidataInfantil: v.candidate_child ? `${v.candidate_child.nome} (Nº ${v.candidate_child.numero})` : 'Nenhuma',
+      votoData: v.voted_at,
+      ip: v.ip,
+    }));
+  }
 }

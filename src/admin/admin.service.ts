@@ -57,6 +57,37 @@ export class AdminService implements OnModuleInit {
     return { email: defaultEmail };
   }
 
+  // Redefine a senha do admin padrão para uma senha conhecida
+  async resetAdminPassword(password?: string): Promise<{ email: string; password: string }> {
+    const defaultEmail = 'admin@votacao.com';
+    const newPassword = password ?? this.config.get<string>('ADMIN_DEFAULT_PASSWORD', 'Admin@12345');
+    const senha_hash = await bcrypt.hash(newPassword, 12);
+
+    const existing = await this.adminRepository.findOne({ where: { email: defaultEmail } });
+
+    if (existing) {
+      await this.adminRepository.update(existing.id, {
+        senha_hash,
+        ativo: true,
+        nome: 'Administrador',
+        role: AdminRole.ADMIN,
+      });
+      this.logger.warn(`Senha do admin redefinida via endpoint. E-mail: ${defaultEmail}`);
+    } else {
+      await this.adminRepository.save(
+        this.adminRepository.create({
+          nome: 'Administrador',
+          email: defaultEmail,
+          senha_hash,
+          role: AdminRole.ADMIN,
+        }),
+      );
+      this.logger.warn(`Admin padrão criado via endpoint. E-mail: ${defaultEmail}`);
+    }
+
+    return { email: defaultEmail, password: newPassword };
+  }
+
   async login(dto: LoginAdminDto, ip: string): Promise<{ token: string; admin: Partial<Admin> }> {
     const admin = await this.adminRepository.findOne({ where: { email: dto.email, ativo: true } });
 

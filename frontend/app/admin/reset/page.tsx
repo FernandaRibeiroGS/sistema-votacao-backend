@@ -75,7 +75,6 @@ export default function ResetPasswordPage() {
 
               <Button
                 onClick={handleReset}
-                loading={state === 'loading'}
                 className="w-full py-3"
               >
                 Redefinir Senha do Administrador

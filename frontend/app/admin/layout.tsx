@@ -11,14 +11,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
-    if (!token && pathname !== '/admin/login') {
+    const isPublicPage = pathname === '/admin/login' || pathname === '/admin/reset';
+    if (!token && !isPublicPage) {
       router.replace('/admin/login');
     } else {
       setReady(true);
     }
   }, [pathname, router]);
 
-  if (pathname === '/admin/login') {
+  if (pathname === '/admin/login' || pathname === '/admin/reset') {
     return <>{children}</>;
   }
 

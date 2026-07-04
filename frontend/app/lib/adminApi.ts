@@ -7,7 +7,10 @@ const adminApi = axios.create({
 adminApi.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('admin_token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    // Only add token for protected endpoints
+    if (token && !config.url?.includes('/auth/')) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });

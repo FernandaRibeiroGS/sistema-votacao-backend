@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, Length, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, Matches } from 'class-validator';
 
 export class StartVoteDto {
   @IsString()
@@ -7,6 +7,14 @@ export class StartVoteDto {
   cpf: string;
 
   @IsString()
-  @IsNotEmpty({ message: 'Token do captcha é obrigatório.' })
-  captchaToken: string;
+  @IsNotEmpty({ message: 'Nome completo é obrigatório.' })
+  nomeCompleto: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Resposta do captcha é obrigatória.' })
+  captchaAnswer: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Chave do captcha é obrigatória.' })
+  captchaKey: string;
 }

@@ -8,14 +8,18 @@ import { AdminRole } from '../admin/entities/admin.entity';
 export class ResultsController {
   constructor(private readonly resultsService: ResultsService) {}
 
-  // Público — resultados ao vivo do concurso ativo
+  // Administrativo — resultados ao vivo do concurso ativo
   @Get('results/live')
+  @UseGuards(JwtAdminGuard, RolesGuard)
+  @Roles(AdminRole.ADMIN, AdminRole.OPERATOR, AdminRole.READER)
   async getLive(@Query('contestId') contestId?: string) {
     return this.resultsService.getLiveResults(contestId ? Number(contestId) : undefined);
   }
 
-  // Público — dados temporais para gráfico de linha
+  // Administrativo — dados temporais para gráfico de linha
   @Get('results/:contestId/temporal')
+  @UseGuards(JwtAdminGuard, RolesGuard)
+  @Roles(AdminRole.ADMIN, AdminRole.OPERATOR, AdminRole.READER)
   async getTemporal(@Param('contestId', ParseIntPipe) contestId: number) {
     return this.resultsService.getTemporalData(contestId);
   }

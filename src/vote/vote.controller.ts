@@ -18,9 +18,19 @@ export class VoteController {
     return this.voteService.getVoteOptions();
   }
 
+  @Get('captcha')
+  async getCaptcha() {
+    return this.voteService.generateCaptcha();
+  }
+
   @Post('session')
   async startSession(@Body() dto: StartVoteDto) {
-    return this.voteService.startVoteSession(dto.cpf, dto.captchaToken);
+    return this.voteService.startVoteSession(
+      dto.cpf,
+      dto.nomeCompleto,
+      dto.captchaAnswer,
+      dto.captchaKey,
+    );
   }
 
   @Post('submit')

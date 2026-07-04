@@ -60,25 +60,143 @@ export class VoteService implements OnModuleDestroy {
     };
   }
 
+  async generateCaptcha(): Promise<{ challenge: string; captchaKey: string }> {
+    const num1 = Math.floor(Math.random() * 9) + 1;
+    const num2 = Math.floor(Math.random() * 9) + 1;
+    const challenge = `Quanto é ${num1} + ${num2}?`;
+    const answer = num1 + num2;
+
+    const captchaKey = await this.jwtService.signAsync(
+      { answer },
+      { expiresIn: '3m' },
+    );
+
+    return { challenge, captchaKey };
+  }
+
   async startVoteSession(
     cpf: string,
-    captchaToken: string,
+    nomeCompleto: string,
+    captchaAnswer: string,
+    captchaKey: string,
   ): Promise<{ token: string }> {
-    await this.validateCaptcha(captchaToken);
+    // 1. Validar Captcha
+    try {
+      const payload = await this.jwtService.verifyAsync(captchaKey);
+      if (!payload || payload.answer === undefined) {
+        throw new HttpException('Desafio de captcha inválido.', HttpStatus.BAD_REQUEST);
+      }
+      if (Number(payload.answer) !== Number(captchaAnswer)) {
+        throw new HttpException('Resposta do captcha incorreta.', HttpStatus.BAD_REQUEST);
+      }
+    } catch (err: any) {
+      if (err instanceof HttpException) throw err;
+      throw new HttpException('Captcha expirado ou inválido. Tente novamente.', HttpStatus.BAD_REQUEST);
+    }
 
-    // RN07 — valida matematicamente antes de qualquer outra coisa
+    // 2. Valida matematicamente antes de qualquer outra coisa
     const cleanCpf = sanitizeCpf(cpf);
     if (!isValidCpf(cleanCpf)) {
       throw new HttpException('CPF inválido.', HttpStatus.BAD_REQUEST);
     }
 
-    // Verifica se votação está aberta (RN08)
+    const apiToken = this.config.get<string>('CPF_API_TOKEN');
+    const apiPackageId = this.config.get<string>('CPF_API_PACKAGE_ID');
+
+    if (apiToken && apiToken !== 'placeholder' && apiPackageId) {
+      try {
+        const url = `https://api.cpfcnpj.com.br/${apiToken}/${apiPackageId}/${cleanCpf}`;
+        const response = await fetch(url);
+        
+        let responseText = '';
+        try {
+          responseText = await response.text();
+        } catch {}
+
+        if (!response.ok) {
+          this.logger.error(`Erro na API cpfcnpj.com.br (Status: ${response.status}). Resposta: ${responseText}`);
+          throw new HttpException(
+            `Erro de comunicação com a Receita Federal (Código ${response.status}). Verifique o token/pacote no .env.`,
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+
+        let data: any;
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          this.logger.error(`Resposta da API do CPF não é um JSON válido: ${responseText}`);
+          throw new HttpException('Erro na resposta do serviço de validação.', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // Na API do cpfcnpj.com.br, status 1, "1", 200 ou true significam sucesso
+        const isSuccess = data.status === 1 || data.status === '1' || data.status === 200 || data.status === '200' || data.status === true || data.status === 'true';
+        if (!isSuccess) {
+          this.logger.error(`Erro retornado pela API do CPF: ${JSON.stringify(data)}`);
+          const errorMsg = data.erro || data.message || data.error || 'CPF não encontrado ou inválido na Receita Federal.';
+          throw new HttpException(errorMsg, HttpStatus.BAD_REQUEST);
+        }
+
+        // Alguns pacotes retornam os dados aninhados em 'data', outros na raiz da resposta
+        const resultData = data.data || data;
+
+        // Validar Nome Completo do Titular do CPF (para o Plano A)
+        const apiNome = resultData.nome;
+        if (apiNome) {
+          const cleanString = (str: string): string => {
+            return str
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '') // remove acentos
+              .replace(/[^a-z0-9 ]/g, '')
+              .replace(/\s+/g, ' ') // remove espaços extras
+              .trim();
+          };
+
+          const userWords = cleanString(nomeCompleto).split(' ').filter(w => w.length > 0);
+          const apiWords = cleanString(apiNome).split(' ').filter(w => w.length > 0);
+
+          if (userWords.length < 2) {
+            throw new HttpException('Digite seu nome completo (nome e pelo menos um sobrenome).', HttpStatus.BAD_REQUEST);
+          }
+
+          // Confere se cada palavra digitada pelo usuário está contida no nome oficial retornado pela API
+          const allWordsMatch = userWords.every(word => apiWords.includes(word));
+          if (!allWordsMatch) {
+            throw new HttpException('O nome informado não corresponde ao titular deste CPF.', HttpStatus.BAD_REQUEST);
+          }
+        } else {
+          this.logger.warn('A API do CPF não retornou o nome do titular. A validação de nome foi pulada.');
+        }
+
+        const situacao = resultData.situacao?.toLowerCase();
+        if (situacao) {
+          if (situacao !== 'regular') {
+            throw new HttpException(
+              `O CPF informado está com situação cadastral '${resultData.situacao}' e não está apto a votar.`,
+              HttpStatus.BAD_REQUEST,
+            );
+          }
+        }
+      } catch (err: any) {
+        if (err instanceof HttpException) throw err;
+        this.logger.error(`Erro ao consultar API de CPF: ${err.message}`);
+        throw new HttpException(
+          'Serviço de validação de CPF temporariamente indisponível. Tente novamente.',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
+    } else {
+      this.logger.warn('Chave da API de CPF não configurada. Validação externa ignorada.');
+    }
+
+    // 4. Verifica se votação está aberta (RN08)
     const contest = await this.contestService.getActiveContest();
 
     const salt = this.config.get<string>('CPF_SALT');
     const cpfHash = createHash('sha256').update(cleanCpf + salt).digest('hex');
 
-    // Verifica Redis antes de qualquer outra operação (RN01)
+    // 5. Verifica Redis antes de qualquer outra operação (RN01)
     const hasVoted = await this.redisClient.get(`voted:${cpfHash}`);
     if (hasVoted) {
       throw new HttpException('Este CPF já votou.', HttpStatus.CONFLICT);
@@ -169,26 +287,5 @@ export class VoteService implements OnModuleDestroy {
       descricao: c.descricao,
       numero: c.numero,
     };
-  }
-
-  private async validateCaptcha(token: string): Promise<void> {
-    const secretKey = this.config.get<string>('TURNSTILE_SECRET_KEY');
-
-    if (!secretKey || secretKey === 'SUA_CHAVE_SECRETA_DO_CLOUDFLARE_AQUI') {
-      this.logger.warn('Validação de captcha ignorada em ambiente de desenvolvimento.');
-      return;
-    }
-
-    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: secretKey, response: token }),
-    });
-
-    const data = await response.json() as { success: boolean };
-
-    if (!data.success) {
-      throw new HttpException('Captcha inválido.', HttpStatus.BAD_REQUEST);
-    }
   }
 }

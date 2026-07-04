@@ -36,7 +36,7 @@ export class AdminController {
     return {
       message: `Senha do admin redefinida com sucesso.`,
       email: result.email,
-      password: result.password,
+      senha: result.password,
     };
   }
 

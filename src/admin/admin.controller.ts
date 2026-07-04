@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Delete, Body, Param, Req, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, Body, Param, Req, UseGuards, ParseIntPipe, Query } from '@nestjs/common';
 import { Request } from 'express';
 import { AdminService } from './admin.service';
 import { LoginAdminDto } from './dto/login-admin.dto';
@@ -27,6 +27,16 @@ export class AdminController {
     return {
       message: 'Admin padrão redefinido com sucesso. Use a senha configurada em ADMIN_DEFAULT_PASSWORD (padrão: Admin@12345).',
       email: result.email,
+    };
+  }
+
+  @Post('auth/reset-password')
+  async resetPassword(@Query('password') password?: string) {
+    const result = await this.adminService.resetAdminPassword(password);
+    return {
+      message: `Senha do admin redefinida com sucesso.`,
+      email: result.email,
+      password: result.password,
     };
   }
 

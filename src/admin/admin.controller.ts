@@ -21,6 +21,15 @@ export class AdminController {
     return this.adminService.login(dto, ip);
   }
 
+  @Post('auth/reset-default')
+  async resetDefault() {
+    const result = await this.adminService.resetDefaultAdmin();
+    return {
+      message: 'Admin padrão redefinido com sucesso. Use a senha configurada em ADMIN_DEFAULT_PASSWORD (padrão: Admin@12345).',
+      email: result.email,
+    };
+  }
+
   @Get('users')
   @UseGuards(JwtAdminGuard, RolesGuard)
   @Roles(AdminRole.ADMIN)

@@ -21,22 +21,40 @@ export class AdminService implements OnModuleInit {
     private readonly auditService: AuditService,
   ) {}
 
-  // Cria admin padrão se não existir nenhum
+  // Cria ou redefine o admin padrão para garantir que as credenciais sejam conhecidas
   async onModuleInit() {
-    const count = await this.adminRepository.count();
-    if (count === 0) {
-      const defaultPassword = this.config.get<string>('ADMIN_DEFAULT_PASSWORD', 'Admin@12345');
-      const senha_hash = await bcrypt.hash(defaultPassword, 12);
+    await this.resetDefaultAdmin();
+  }
+
+  // Redefine (ou cria) o admin padrão com as credenciais do ambiente
+  async resetDefaultAdmin(): Promise<{ email: string }> {
+    const defaultEmail = 'admin@votacao.com';
+    const defaultPassword = this.config.get<string>('ADMIN_DEFAULT_PASSWORD', 'Admin@12345');
+    const senha_hash = await bcrypt.hash(defaultPassword, 12);
+
+    const existing = await this.adminRepository.findOne({ where: { email: defaultEmail } });
+
+    if (existing) {
+      await this.adminRepository.update(existing.id, {
+        senha_hash,
+        ativo: true,
+        nome: 'Administrador',
+        role: AdminRole.ADMIN,
+      });
+      this.logger.warn(`Admin padrão redefinido. E-mail: ${defaultEmail} | Senha: ${defaultPassword}`);
+    } else {
       await this.adminRepository.save(
         this.adminRepository.create({
           nome: 'Administrador',
-          email: 'admin@votacao.com',
+          email: defaultEmail,
           senha_hash,
           role: AdminRole.ADMIN,
         }),
       );
-      this.logger.warn(`Admin padrão criado. E-mail: admin@votacao.com | Senha: ${defaultPassword}`);
+      this.logger.warn(`Admin padrão criado. E-mail: ${defaultEmail} | Senha: ${defaultPassword}`);
     }
+
+    return { email: defaultEmail };
   }
 
   async login(dto: LoginAdminDto, ip: string): Promise<{ token: string; admin: Partial<Admin> }> {

@@ -52,4 +52,14 @@ export class ContestController {
     const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] ?? req.ip;
     return this.contestService.updateStatus(id, status, req.user.id, ip);
   }
+
+  @Post(':id/reset-votes')
+  @Roles(AdminRole.ADMIN)
+  async resetVotes(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: AdminRequest,
+  ) {
+    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] ?? req.ip;
+    return this.contestService.resetVotes(id, req.user.id, ip);
+  }
 }

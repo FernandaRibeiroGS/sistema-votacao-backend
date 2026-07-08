@@ -1,4 +1,5 @@
 const { Client } = require('pg');
+const Redis = require('ioredis');
 const fs = require('fs');
 const path = require('path');
 
@@ -89,6 +90,21 @@ async function seed() {
   await client.query('DELETE FROM candidates;');
   await client.query('DELETE FROM categories;');
   await client.query('DELETE FROM contests;');
+
+  // 1.1 Limpar dados do Redis (histórico de votação do CPF)
+  try {
+    console.log('Limpando chaves de CPF do Redis...');
+    const redis = new Redis({
+      host: env.REDIS_HOST || 'localhost',
+      port: parseInt(env.REDIS_PORT || '6379', 10),
+      password: env.REDIS_PASSWORD || undefined,
+    });
+    await redis.flushdb();
+    console.log('Redis limpo com sucesso!');
+    await redis.quit();
+  } catch (redisErr) {
+    console.log('Aviso: Não foi possível limpar o Redis (pode ser que não esteja rodando):', redisErr.message);
+  }
 
   // 2. Definir datas (início em 2 minutos a partir de agora, encerramento em 1 hora)
   const now = new Date();

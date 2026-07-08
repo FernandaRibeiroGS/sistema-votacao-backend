@@ -43,6 +43,24 @@ export default function Home() {
     try {
       const { data } = await api.get<CurrentContest | null>('/votes/current-contest');
       setContest(data);
+
+      if (!isBackground) {
+        if (!data) {
+          toast.error('Nenhum concurso ativo no momento.');
+        } else {
+          const now = new Date();
+          const inicio = new Date(data.inicio);
+          if (data.isUpcoming) {
+            if (now >= inicio) {
+              toast.error('A votação está aguardando liberação do administrador.');
+            } else {
+              toast.error('O período de votação ainda não foi iniciado.');
+            }
+          } else if (data.isOpen) {
+            toast.success('Votação liberada! Faça sua escolha.');
+          }
+        }
+      }
     } catch {
       toast.error('Erro ao carregar dados do concurso.');
     } finally {
@@ -125,6 +143,7 @@ export default function Home() {
               contestNome={contest.nome}
               inicio={contest.inicio}
               onCountdownFinished={() => checkContestStatus(true)}
+              onCheckStatus={() => checkContestStatus(false)}
             />
           ) : !contest.isOpen ? (
             <div className="text-center py-8">

@@ -7,9 +7,10 @@ interface StepCountdownProps {
   contestNome: string;
   inicio: string;
   onCountdownFinished: () => void;
+  onCheckStatus: () => void;
 }
 
-export function StepCountdown({ contestNome, inicio, onCountdownFinished }: StepCountdownProps) {
+export function StepCountdown({ contestNome, inicio, onCountdownFinished, onCheckStatus }: StepCountdownProps) {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -125,7 +126,7 @@ export function StepCountdown({ contestNome, inicio, onCountdownFinished }: Step
         {timeLeft.totalSeconds <= 0 ? (
           <Button
             variant="primary"
-            onClick={onCountdownFinished}
+            onClick={onCheckStatus}
             className="w-full py-4 text-base animate-pulse bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold"
           >
             🚀 Entrar na Votação
@@ -133,7 +134,7 @@ export function StepCountdown({ contestNome, inicio, onCountdownFinished }: Step
         ) : (
           <Button
             variant="outline"
-            onClick={onCountdownFinished}
+            onClick={onCheckStatus}
             className="w-full py-3.5 border-stone-700 text-stone-300 hover:bg-stone-800 hover:text-white"
           >
             🔄 Verificar Liberação

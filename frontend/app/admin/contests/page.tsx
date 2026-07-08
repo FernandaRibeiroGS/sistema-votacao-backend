@@ -20,6 +20,7 @@ export default function ContestsPage() {
   const [contests, setContests] = useState<Contest[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<number | null>(null);
+  const [resetting, setResetting] = useState<number | null>(null);
 
   const fetchContests = useCallback(async () => {
     try {
@@ -40,12 +41,28 @@ export default function ContestsPage() {
     setUpdating(contest.id);
     try {
       await adminApi.put(`/admin/contests/${contest.id}/status`, { status: action.next });
-      toast.success('Status atualizado com sucesso!');
+      toast.success('Status updated successfully!');
       fetchContests();
     } catch (err: any) {
       toast.error(err.response?.data?.message ?? 'Erro ao atualizar status.');
     } finally {
       setUpdating(null);
+    }
+  }
+
+  async function handleResetVotes(contestId: number) {
+    if (!confirm('ATENÇÃO: Você tem certeza que deseja zerar todos os votos e liberar os CPFs deste concurso? Esta ação é irreversível.')) {
+      return;
+    }
+    setResetting(contestId);
+    try {
+      await adminApi.post(`/admin/contests/${contestId}/reset-votes`);
+      toast.success('Votação zerada e CPFs liberados com sucesso!');
+      fetchContests();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message ?? 'Erro ao zerar votos.');
+    } finally {
+      setResetting(null);
     }
   }
 
@@ -115,6 +132,14 @@ export default function ContestsPage() {
                       {action.label}
                     </Button>
                   )}
+                  <Button
+                    variant="outline"
+                    className="text-xs px-3 py-2 text-red-400 border-red-500/20 hover:bg-red-600 hover:text-white"
+                    loading={resetting === contest.id}
+                    onClick={() => handleResetVotes(contest.id)}
+                  >
+                    🗑️ Zerar Votos
+                  </Button>
                 </div>
               </div>
             </div>

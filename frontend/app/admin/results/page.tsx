@@ -51,22 +51,41 @@ export default function ResultsAdminPage() {
   }, []);
 
   useEffect(() => {
-    const socket = getSocket();
-    socket.connect();
+    let socket: any;
 
-    socket.on('connect', () => {
-      setConnected(true);
-      socket.emit('join-contest', {});
-    });
+    async function initSocket() {
+      let fallbackUrl = 'http://localhost:3001';
+      try {
+        const res = await fetch('/api/config');
+        const config = await res.json();
+        if (config.socketUrl) {
+          fallbackUrl = config.socketUrl;
+        }
+      } catch (err) {
+        console.error('Erro ao obter config do socket:', err);
+      }
 
-    socket.on('disconnect', () => setConnected(false));
-    socket.on('results-update', (data: LiveResults) => setResults(data));
+      socket = getSocket(fallbackUrl);
+      socket.connect();
+
+      socket.on('connect', () => {
+        setConnected(true);
+        socket.emit('join-contest', {});
+      });
+
+      socket.on('disconnect', () => setConnected(false));
+      socket.on('results-update', (data: LiveResults) => setResults(data));
+    }
+
+    initSocket();
 
     return () => {
-      socket.off('results-update');
-      socket.off('connect');
-      socket.off('disconnect');
-      socket.disconnect();
+      if (socket) {
+        socket.off('results-update');
+        socket.off('connect');
+        socket.off('disconnect');
+        socket.disconnect();
+      }
     };
   }, []);
 

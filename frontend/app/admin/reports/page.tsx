@@ -78,25 +78,38 @@ export default function ReportsPage() {
     });
   }, [votes, searchQuery]);
 
-  // Agrupa os votos por candidata
-  const groupedByCandidate = useMemo(() => {
-    const grouped: Record<string, { total: number; votes: VoteReportEntry[] }> = {};
+  // Agrupa os votos por Categoria e depois por Candidata
+  const groupedByCategoryAndCandidate = useMemo(() => {
+    const grouped = {
+      adulta: {} as Record<string, { total: number; votes: VoteReportEntry[] }>,
+      infantil: {} as Record<string, { total: number; votes: VoteReportEntry[] }>,
+    };
 
     votes.forEach((v) => {
-      // Adiciona voto na candidata adulta
-      const adult = `👸 ${v.candidataAdulta}`;
-      if (!grouped[adult]) grouped[adult] = { total: 0, votes: [] };
-      grouped[adult].votes.push(v);
-      grouped[adult].total += 1;
+      // Categoria Adulta
+      const adult = v.candidataAdulta;
+      if (adult) {
+        if (!grouped.adulta[adult]) grouped.adulta[adult] = { total: 0, votes: [] };
+        grouped.adulta[adult].votes.push(v);
+        grouped.adulta[adult].total += 1;
+      }
 
-      // Adiciona voto na candidata infantil
-      const child = `👧 ${v.candidataInfantil}`;
-      if (!grouped[child]) grouped[child] = { total: 0, votes: [] };
-      grouped[child].votes.push(v);
-      grouped[child].total += 1;
+      // Categoria Infantil
+      const child = v.candidataInfantil;
+      if (child) {
+        if (!grouped.infantil[child]) grouped.infantil[child] = { total: 0, votes: [] };
+        grouped.infantil[child].votes.push(v);
+        grouped.infantil[child].total += 1;
+      }
     });
 
-    return Object.entries(grouped).sort((a, b) => b[1].total - a[1].total);
+    const sortedAdulta = Object.entries(grouped.adulta).sort((a, b) => b[1].total - a[1].total);
+    const sortedInfantil = Object.entries(grouped.infantil).sort((a, b) => b[1].total - a[1].total);
+
+    return {
+      adulta: sortedAdulta,
+      infantil: sortedInfantil,
+    };
   }, [votes]);
 
   // Exportar dados para CSV com suporte a acentos no Excel (BOM UTF-8)
@@ -317,30 +330,78 @@ export default function ReportsPage() {
       )}
 
       {!loadingVotes && votes.length > 0 && activeTab === 'grouped' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {groupedByCandidate.map(([candidateName, group]) => (
-            <div key={candidateName} className="bg-stone-900 border border-stone-850 rounded-2xl p-5 flex flex-col gap-4">
-              <div className="flex items-center justify-between border-b border-stone-800 pb-3">
-                <h3 className="font-bold text-white text-base">{candidateName}</h3>
-                <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-extrabold px-3 py-1 rounded-full">
-                  {group.total} voto(s)
-                </span>
-              </div>
-              <div className="max-h-80 overflow-y-auto flex flex-col gap-2 pr-1">
-                {group.votes.map((v) => (
-                  <div key={v.id} className="bg-stone-950/60 border border-stone-850/50 rounded-xl p-3 flex justify-between items-center text-xs">
-                    <div>
-                      <p className="text-white font-bold">{v.eleitorNome}</p>
-                      <p className="text-stone-500 font-mono mt-0.5">{v.eleitorCpf} | {v.eleitorDataNascimento}</p>
-                    </div>
-                    <span className="text-stone-500 text-[10px]">
-                      {new Date(v.votoData).toLocaleDateString('pt-BR')} {new Date(v.votoData).toLocaleTimeString('pt-BR')}
+        <div className="flex flex-col gap-8">
+          {/* Categoria Adulta */}
+          <div>
+            <div className="flex items-center gap-2 mb-4 border-b border-stone-800 pb-2">
+              <span className="text-xl">👸</span>
+              <h2 className="text-lg font-bold text-amber-400">Categoria Adulta</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {groupedByCategoryAndCandidate.adulta.map(([candidateName, group]) => (
+                <div key={candidateName} className="bg-stone-900 border border-stone-850 rounded-2xl p-5 flex flex-col gap-4 animate-fadeIn">
+                  <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                    <h3 className="font-bold text-white text-base">{candidateName}</h3>
+                    <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-extrabold px-3 py-1 rounded-full">
+                      {group.total} voto(s)
                     </span>
                   </div>
-                ))}
-              </div>
+                  <div className="max-h-60 overflow-y-auto flex flex-col gap-2 pr-1 scrollbar-thin">
+                    {group.votes.map((v) => (
+                      <div key={v.id} className="bg-stone-950/60 border border-stone-850/50 rounded-xl p-3 flex justify-between items-center text-xs hover:border-amber-500/30 transition-colors">
+                        <div>
+                          <p className="text-white font-bold">{v.eleitorNome}</p>
+                          <p className="text-stone-500 font-mono mt-0.5">{v.eleitorCpf} | {v.eleitorDataNascimento}</p>
+                        </div>
+                        <span className="text-stone-500 text-[10px]">
+                          {new Date(v.votoData).toLocaleDateString('pt-BR')} {new Date(v.votoData).toLocaleTimeString('pt-BR')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {groupedByCategoryAndCandidate.adulta.length === 0 && (
+                <p className="text-stone-500 text-sm italic col-span-2">Nenhum voto registrado para a Categoria Adulta.</p>
+              )}
             </div>
-          ))}
+          </div>
+
+          {/* Categoria Infantil */}
+          <div>
+            <div className="flex items-center gap-2 mb-4 border-b border-stone-800 pb-2">
+              <span className="text-xl">👧</span>
+              <h2 className="text-lg font-bold text-amber-400">Categoria Infantil</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {groupedByCategoryAndCandidate.infantil.map(([candidateName, group]) => (
+                <div key={candidateName} className="bg-stone-900 border border-stone-850 rounded-2xl p-5 flex flex-col gap-4 animate-fadeIn">
+                  <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                    <h3 className="font-bold text-white text-base">{candidateName}</h3>
+                    <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-extrabold px-3 py-1 rounded-full">
+                      {group.total} voto(s)
+                    </span>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto flex flex-col gap-2 pr-1 scrollbar-thin">
+                    {group.votes.map((v) => (
+                      <div key={v.id} className="bg-stone-950/60 border border-stone-850/50 rounded-xl p-3 flex justify-between items-center text-xs hover:border-amber-500/30 transition-colors">
+                        <div>
+                          <p className="text-white font-bold">{v.eleitorNome}</p>
+                          <p className="text-stone-500 font-mono mt-0.5">{v.eleitorCpf} | {v.eleitorDataNascimento}</p>
+                        </div>
+                        <span className="text-stone-500 text-[10px]">
+                          {new Date(v.votoData).toLocaleDateString('pt-BR')} {new Date(v.votoData).toLocaleTimeString('pt-BR')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {groupedByCategoryAndCandidate.infantil.length === 0 && (
+                <p className="text-stone-500 text-sm italic col-span-2">Nenhum voto registrado para a Categoria Infantil.</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

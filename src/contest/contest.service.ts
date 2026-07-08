@@ -36,6 +36,14 @@ export class ContestService {
     return contest;
   }
 
+  async getCurrentContest(): Promise<Contest | null> {
+    const contests = await this.contestRepository.find({
+      order: { id: 'DESC' },
+      take: 1,
+    });
+    return contests[0] || null;
+  }
+
   async findAll(): Promise<Contest[]> {
     return this.contestRepository.find({ order: { ano: 'DESC', created_at: 'DESC' } });
   }

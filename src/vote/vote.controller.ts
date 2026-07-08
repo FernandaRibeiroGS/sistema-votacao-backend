@@ -4,6 +4,7 @@ import { VoteService } from './vote.service';
 import { StartVoteDto } from './dto/start-vote.dto';
 import { SubmitVoteDto } from './dto/submit-vote.dto';
 import { JwtVoteGuard } from '../auth/guards/jwt-vote.guard';
+import { ContestStatus } from '../contest/entities/contest.entity';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -18,6 +19,27 @@ interface AuthenticatedRequest extends Request {
 @Controller('votes')
 export class VoteController {
   constructor(private readonly voteService: VoteService) {}
+
+  @Get('current-contest')
+  async getCurrentContest() {
+    const contest = await this.voteService.getCurrentContest();
+    if (!contest) {
+      return null;
+    }
+    const now = new Date();
+    const inicio = new Date(contest.inicio);
+    const encerramento = new Date(contest.encerramento);
+
+    return {
+      id: contest.id,
+      nome: contest.nome,
+      inicio: contest.inicio,
+      encerramento: contest.encerramento,
+      status: contest.status,
+      isUpcoming: contest.status === ContestStatus.DRAFT || now < inicio,
+      isOpen: contest.status === ContestStatus.OPEN && now >= inicio && now <= encerramento,
+    };
+  }
 
   @Get('options')
   async getOptions() {

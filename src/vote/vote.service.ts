@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { isValidCpf, sanitizeCpf } from '../utils/cpf.util';
 import { ContestService } from '../contest/contest.service';
+import { Contest } from '../contest/entities/contest.entity';
 import { Candidate } from '../candidate/entities/candidate.entity';
 import { CategoryType } from '../category/entities/category.entity';
 
@@ -34,6 +35,10 @@ export class VoteService implements OnModuleDestroy {
 
   async onModuleDestroy() {
     await this.redisClient.quit();
+  }
+
+  async getCurrentContest(): Promise<Contest | null> {
+    return this.contestService.getCurrentContest();
   }
 
   async getVoteOptions() {

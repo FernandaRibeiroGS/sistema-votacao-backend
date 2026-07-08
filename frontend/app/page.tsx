@@ -36,15 +36,19 @@ export default function Home() {
     checkContestStatus();
   }, []);
 
-  async function checkContestStatus() {
-    setLoadingContest(true);
+  async function checkContestStatus(isBackground = false) {
+    if (!isBackground) {
+      setLoadingContest(true);
+    }
     try {
       const { data } = await api.get<CurrentContest | null>('/votes/current-contest');
       setContest(data);
     } catch {
       toast.error('Erro ao carregar dados do concurso.');
     } finally {
-      setLoadingContest(false);
+      if (!isBackground) {
+        setLoadingContest(false);
+      }
     }
   }
 
@@ -120,7 +124,7 @@ export default function Home() {
             <StepCountdown
               contestNome={contest.nome}
               inicio={contest.inicio}
-              onCountdownFinished={checkContestStatus}
+              onCountdownFinished={() => checkContestStatus(true)}
             />
           ) : !contest.isOpen ? (
             <div className="text-center py-8">

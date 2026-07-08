@@ -18,7 +18,10 @@ export function StepCountdown({ contestNome, inicio, onCountdownFinished }: Step
     totalSeconds: 0,
   });
 
-  const [hasStartedZero, setHasStartedZero] = useState(false);
+  const [hasStartedZero] = useState(() => {
+    const initialDiff = +new Date(inicio) - +new Date();
+    return initialDiff <= 0;
+  });
   const [autoTriggered, setAutoTriggered] = useState(false);
   const [formattedDate, setFormattedDate] = useState('');
 
@@ -36,13 +39,6 @@ export function StepCountdown({ contestNome, inicio, onCountdownFinished }: Step
       setFormattedDate(date.toLocaleDateString('pt-BR', options));
     } catch {
       setFormattedDate('');
-    }
-  }, [inicio]);
-
-  useEffect(() => {
-    const initialDiff = +new Date(inicio) - +new Date();
-    if (initialDiff <= 0) {
-      setHasStartedZero(true);
     }
   }, [inicio]);
 

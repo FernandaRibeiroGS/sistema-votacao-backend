@@ -18,6 +18,8 @@ export function StepCountdown({ contestNome, inicio, onCountdownFinished }: Step
     totalSeconds: 0,
   });
 
+  const [hasStartedZero, setHasStartedZero] = useState(false);
+  const [autoTriggered, setAutoTriggered] = useState(false);
   const [formattedDate, setFormattedDate] = useState('');
 
   useEffect(() => {
@@ -38,11 +40,25 @@ export function StepCountdown({ contestNome, inicio, onCountdownFinished }: Step
   }, [inicio]);
 
   useEffect(() => {
+    const initialDiff = +new Date(inicio) - +new Date();
+    if (initialDiff <= 0) {
+      setHasStartedZero(true);
+    }
+  }, [inicio]);
+
+  useEffect(() => {
     const calculateTimeLeft = () => {
       const difference = +new Date(inicio) - +new Date();
       if (difference <= 0) {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, totalSeconds: 0 });
-        onCountdownFinished();
+        
+        if (!hasStartedZero && !autoTriggered) {
+          setAutoTriggered(true);
+          // Aguarda 2 segundos para dar tempo do servidor sincronizar o relógio
+          setTimeout(() => {
+            onCountdownFinished();
+          }, 2000);
+        }
         return;
       }
       
@@ -58,7 +74,7 @@ export function StepCountdown({ contestNome, inicio, onCountdownFinished }: Step
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [inicio, onCountdownFinished]);
+  }, [inicio, onCountdownFinished, hasStartedZero, autoTriggered]);
 
   const padZero = (num: number) => String(num).padStart(2, '0');
 
@@ -110,13 +126,23 @@ export function StepCountdown({ contestNome, inicio, onCountdownFinished }: Step
 
       {/* Action buttons */}
       <div className="w-full max-w-sm flex flex-col gap-2 mt-2">
-        <Button
-          variant="outline"
-          onClick={onCountdownFinished}
-          className="w-full py-3.5 border-stone-700 text-stone-300 hover:bg-stone-800 hover:text-white"
-        >
-          🔄 Verificar Liberação
-        </Button>
+        {timeLeft.totalSeconds <= 0 ? (
+          <Button
+            variant="primary"
+            onClick={onCountdownFinished}
+            className="w-full py-4 text-base animate-pulse bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold"
+          >
+            🚀 Entrar na Votação
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={onCountdownFinished}
+            className="w-full py-3.5 border-stone-700 text-stone-300 hover:bg-stone-800 hover:text-white"
+          >
+            🔄 Verificar Liberação
+          </Button>
+        )}
       </div>
     </div>
   );

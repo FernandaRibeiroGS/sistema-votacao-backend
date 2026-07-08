@@ -145,7 +145,7 @@ export default function CandidatesPage() {
                   <div className="relative h-32 bg-stone-800">
                     {c.foto ? (
                       <img
-                        src={c.foto.startsWith('http') ? c.foto : `${process.env.NEXT_PUBLIC_API_URL}${c.foto}`}
+                        src={c.foto.startsWith('http') ? c.foto : `${process.env.NEXT_PUBLIC_API_URL || ''}${c.foto}`}
                         alt={c.nome}
                         className="w-full h-full object-cover"
                       />

@@ -17,7 +17,7 @@ function CandidateSummary({ label, candidate }: { label: string; candidate: Cand
       <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-stone-700 flex-shrink-0">
         {candidate.foto ? (
           <img
-            src={candidate.foto.startsWith('http') ? candidate.foto : `${process.env.NEXT_PUBLIC_API_URL}${candidate.foto}`}
+            src={candidate.foto.startsWith('http') ? candidate.foto : `${process.env.NEXT_PUBLIC_API_URL || ''}${candidate.foto}`}
             alt={candidate.nome}
             className="w-full h-full object-cover"
           />

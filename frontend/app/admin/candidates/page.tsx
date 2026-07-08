@@ -144,9 +144,8 @@ export default function CandidatesPage() {
                 <div key={c.id} className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
                   <div className="relative h-32 bg-stone-800">
                     {c.foto ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={`${process.env.NEXT_PUBLIC_API_URL}${c.foto}`}
+                        src={c.foto.startsWith('http') ? c.foto : `${process.env.NEXT_PUBLIC_API_URL}${c.foto}`}
                         alt={c.nome}
                         className="w-full h-full object-cover"
                       />

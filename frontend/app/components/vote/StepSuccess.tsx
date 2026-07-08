@@ -55,9 +55,8 @@ export function StepSuccess({ selectedChild, selectedAdult, onReset }: StepSucce
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg overflow-hidden bg-stone-900 border border-stone-800 flex-shrink-0">
                 {selectedChild.foto ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL}${selectedChild.foto}`}
+                    src={selectedChild.foto.startsWith('http') ? selectedChild.foto : `${process.env.NEXT_PUBLIC_API_URL}${selectedChild.foto}`}
                     alt={selectedChild.nome}
                     className="w-full h-full object-cover"
                   />
@@ -80,9 +79,8 @@ export function StepSuccess({ selectedChild, selectedAdult, onReset }: StepSucce
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg overflow-hidden bg-stone-900 border border-stone-800 flex-shrink-0">
                 {selectedAdult.foto ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL}${selectedAdult.foto}`}
+                    src={selectedAdult.foto.startsWith('http') ? selectedAdult.foto : `${process.env.NEXT_PUBLIC_API_URL}${selectedAdult.foto}`}
                     alt={selectedAdult.nome}
                     className="w-full h-full object-cover"
                   />

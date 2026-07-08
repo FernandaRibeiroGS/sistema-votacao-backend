@@ -21,9 +21,8 @@ export function CandidateCard({ candidate, selected, onSelect }: CandidateCardPr
     >
       <div className="relative h-48 w-full bg-stone-800">
         {candidate.foto ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={`${process.env.NEXT_PUBLIC_API_URL}${candidate.foto}`}
+            src={candidate.foto.startsWith('http') ? candidate.foto : `${process.env.NEXT_PUBLIC_API_URL}${candidate.foto}`}
             alt={candidate.nome}
             className="w-full h-full object-cover"
           />

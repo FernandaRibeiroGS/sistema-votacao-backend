@@ -16,9 +16,8 @@ function CandidateSummary({ label, candidate }: { label: string; candidate: Cand
     <div className="bg-stone-800 rounded-2xl p-4 flex items-center gap-4 border border-stone-700">
       <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-stone-700 flex-shrink-0">
         {candidate.foto ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={`${process.env.NEXT_PUBLIC_API_URL}${candidate.foto}`}
+            src={candidate.foto.startsWith('http') ? candidate.foto : `${process.env.NEXT_PUBLIC_API_URL}${candidate.foto}`}
             alt={candidate.nome}
             className="w-full h-full object-cover"
           />
